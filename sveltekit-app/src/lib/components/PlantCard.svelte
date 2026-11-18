@@ -10,10 +10,9 @@
   } from "lucide-svelte";
 
   // Each card receives its own plant from MongoDB
-  let { plant, deletable = false } = $props();
+  let { plant } = $props();
 
   // Convert text values into positions on a 0–100 scale
-  /** @param {unknown} value */
   function toScore(value) {
     if (value === null || value === undefined || value === "") {
       return null;
@@ -23,7 +22,6 @@
       return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : null;
     }
 
-    /** @type {Record<string, number>} */
     const scores = {
       low: 20,
       minimum: 20,
@@ -42,9 +40,7 @@
     return scores[String(value).toLowerCase().trim()] ?? null;
   }
 
-  /** @param {string} tag */
   function formatTag(tag) {
-    /** @type {Record<string, string>} */
     const labels = {
       "easy-care": "Easy care",
       "pet-safe": "Pet-friendly",
@@ -81,7 +77,7 @@
       {
         id: "water",
         label: "Water needs",
-        raw: plant.waterNeeds,
+        raw: plant.waterabout:blank#blockedNeeds,
         score: toScore(plant.waterNeeds),
         icon: Droplet,
         leftIcon: Droplet,
@@ -168,30 +164,38 @@
           <span>View plant</span>
           <ArrowRight size={20} strokeWidth={2} />
         </a>
-        {#if deletable}
-          <form method="POST" action="/shelf?/delete">
-            <input type="hidden" name="id" value={plantId} />
-            <button type="submit" aria-label={`Delete ${plant.species || plant.name}`}>Delete plant</button>
-          </form>
-        {/if}
       {/if}
     </div>
   </div>
 </article>
 
 <style>
-  button {
-    border: 0;
-    padding: 8px 0;
-    background: transparent;
-    color: #a12828;
-    font: inherit;
-    cursor: pointer;
+  :global(:has(> .plant-card)) {
+    max-width: 40%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  @media (max-width: 1100px) {
+    :global(:has(> .plant-card)) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 800px) {
+    :global(:has(> .plant-card)) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 520px) {
+    :global(:has(> .plant-card)) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .plant-card {
-    min-width: 0;
     width: 100%;
+    max-width: none;
     box-sizing: border-box;
     padding: 16px;
     border: 1px solid #eae7ee;
@@ -259,7 +263,6 @@
 
   .heading {
     display: flex;
-    flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
@@ -276,6 +279,34 @@
     font-weight: 700;
     letter-spacing: -0.7px;
     overflow-wrap: anywhere;
+  }
+
+  .species {
+    margin: 7px 0 0;
+    color: #928d9d;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Status badge */
+
+  .status {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 11px;
+    border-radius: 100px;
+    background: #eadfff;
+    color: #5d2fdc;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .status.swapped {
+    background: #ecebf0;
+    color: #77717f;
   }
 
   /* Tags */

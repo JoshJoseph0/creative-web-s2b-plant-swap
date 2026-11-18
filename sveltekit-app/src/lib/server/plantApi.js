@@ -36,6 +36,23 @@ export async function getPlants(fetcher) {
   return response.json();
 }
 
+/** @param {typeof fetch} fetcher
+ * @param {string} id
+ * @returns {Promise<Plant>}
+ */
+export async function getPlant(fetcher, id) {
+  if (!/^[a-f\d]{24}$/i.test(id)) error(404, 'Plant not found');
+  let response;
+  try {
+    response = await fetcher(`${EXPRESS_API_URL}/plants/${id}`);
+  } catch {
+    error(502, 'Cannot reach the Express server');
+  }
+  if (response.status === 404) error(404, 'Plant not found');
+  if (!response.ok) error(502, 'Could not load plant');
+  return response.json();
+}
+
 /**
  * @param {typeof fetch} fetcher
  * @param {{ name: string, species: string, lightNeeds: string, tags: string[] }} plant

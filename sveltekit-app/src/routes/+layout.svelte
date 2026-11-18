@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../../style.css";
   import favicon from "#lib/assets/favicon.svg";
   import Sidebar from "#lib/components/sidebar.svelte";
   import type { LayoutProps } from "./$types";
@@ -19,8 +20,10 @@
 <style>
   .page-content {
     min-height: 100vh;
-    margin-left: 250px;
-    padding: 1rem 2rem;
+    margin-left: var(--sidebar-width);
+    padding: var(--space-4) var(--space-5);
+    box-sizing: border-box;
+    container-type: inline-size;
   }
 
   @media (max-width: 640px) {

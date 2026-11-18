@@ -9,7 +9,9 @@
 
 <main>
   <section class="plant-cards">
-    <h2>Your plants ({data.plants.length})</h2>
+    <div class="shelf-heading">
+      <h2>Your plants ({data.plants.length})</h2>
+    </div>
     {#if form?.error}
       <p role="alert">{form.error}</p>
     {/if}
@@ -30,6 +32,17 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .shelf-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .shelf-heading h2 {
+    margin: 0;
   }
 
 </style>

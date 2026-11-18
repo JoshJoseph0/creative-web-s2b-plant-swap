@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@500;600&display=swap");
+
+:root {
+  /* Brand */
+  --color-primary: #28513c;
+  --color-primary-hover: #1d3e2d;
+  --color-sage: #a9bda7;
+  --color-terracotta: #ad6247;
+
+  /* Surfaces */
+  --color-background: #f7f5ef;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f0f2eb;
+  --color-border: #dce4d9;
+
+  /* Text */
+  --color-text: #25332b;
+  --color-text-secondary: #526454;
+
+  /* Typography */
+  --font-body: "DM Sans", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --content-max-width: 1440px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+.display-heading {
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--color-primary);
+}
+
+main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-terracotta);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

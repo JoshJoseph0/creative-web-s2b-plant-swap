@@ -22,6 +22,26 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  if (!/^[a-f\d]{24}$/i.test(req.params.id)) {
+    return res.status(404).json({ error: 'Plant not found' });
+  }
+  try {
+    const plant = await Plant.findById(req.params.id);
+    if (!plant) return res.status(404).json({ error: 'Plant not found' });
+    res.json({
+      id: plant._id.toString(),
+      name: plant.name,
+      species: plant.species,
+      lightNeeds: plant.lightNeeds,
+      swapped: plant.swapped,
+      tags: plant.tags
+    });
+  } catch {
+    res.status(500).json({ error: 'Could not load plant' });
+  }
+});
+
 // POST /plants - save a new plant
 router.post('/', async (req, res) => {
   const { name, species, lightNeeds, tags = [] } = req.body;

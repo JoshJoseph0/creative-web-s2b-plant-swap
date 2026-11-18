@@ -54,24 +54,28 @@
 
   input,
   select {
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    border: 1px solid #ccc;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
     font-size: 1rem;
   }
 
   button[type="submit"] {
     margin-top: 1rem;
     padding: 0.75rem;
-    background-color: #4caf50;
+    background-color: var(--color-primary);
     color: white;
     border: none;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1rem;
   }
 
   button[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: var(--color-primary-hover);
   }
 </style>

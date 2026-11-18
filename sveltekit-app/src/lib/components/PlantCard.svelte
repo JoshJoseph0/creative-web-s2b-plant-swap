@@ -1,19 +1,31 @@
-<script>
+<script lang="ts">
   import {
     ArrowRight,
     Sprout,
-    Star,
     Droplet,
-    Waves,
     Leaf,
     House,
   } from "lucide-svelte";
 
-  // Each card receives its own plant from MongoDB
-  let { plant } = $props();
+  type Plant = {
+    id?: string;
+    _id?: string;
+    name: string;
+    species: string;
+    imageUrl?: string | null;
+    image?: { url?: string | null } | null;
+    default_image?: { regular_url?: string | null } | null;
+    careLevel?: string | number | null;
+    waterNeeds?: string | number | null;
+    growthSpeed?: string | number | null;
+    room?: string | null;
+    tags?: string[];
+  };
+
+  let { plant, deletable = false, showLink = true }: { plant: Plant; deletable?: boolean; showLink?: boolean } = $props();
 
   // Convert text values into positions on a 0–100 scale
-  function toScore(value) {
+  function toScore(value: string | number | null | undefined): number | null {
     if (value === null || value === undefined || value === "") {
       return null;
     }
@@ -22,7 +34,7 @@
       return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : null;
     }
 
-    const scores = {
+    const scores: Record<string, number> = {
       low: 20,
       minimum: 20,
       easy: 20,
@@ -40,8 +52,8 @@
     return scores[String(value).toLowerCase().trim()] ?? null;
   }
 
-  function formatTag(tag) {
-    const labels = {
+  function formatTag(tag: string): string {
+    const labels: Record<string, string> = {
       "easy-care": "Easy care",
       "pet-safe": "Pet-friendly",
       "low-water": "Low watering",
@@ -71,17 +83,13 @@
         raw: plant.careLevel,
         score: toScore(plant.careLevel),
         icon: Sprout,
-        leftIcon: Sprout,
-        rightIcon: Star,
       },
       {
         id: "water",
         label: "Water needs",
-        raw: plant.waterabout:blank#blockedNeeds,
+        raw: plant.waterNeeds,
         score: toScore(plant.waterNeeds),
         icon: Droplet,
-        leftIcon: Droplet,
-        rightIcon: Waves,
       },
       {
         id: "growth",
@@ -89,8 +97,6 @@
         raw: plant.growthSpeed,
         score: toScore(plant.growthSpeed),
         icon: Leaf,
-        leftIcon: Sprout,
-        rightIcon: Leaf,
       },
     ].filter((metric) => metric.score !== null),
   );
@@ -118,7 +124,7 @@
     <div class="heading">
       <div class="plant-title">
         <h2>{plant.species}</h2>
-        <p>Swap Plant</p>
+        <p>{plant.name}</p>
       </div>
 
       <!-- LOCATION AND TAGS -->
@@ -159,53 +165,37 @@
       {/if}
 
       <!-- VIEW BUTTON -->
-      {#if plantId}
+      {#if plantId && showLink}
         <a href={`/shelf/${plantId}`} class="view-button">
           <span>View plant</span>
           <ArrowRight size={20} strokeWidth={2} />
         </a>
+      {/if}
+      {#if plantId && deletable}
+        <form method="POST" action="/shelf?/delete">
+          <input type="hidden" name="id" value={plantId} />
+          <button type="submit" aria-label={`Delete ${plant.name}`}>Delete plant</button>
+        </form>
       {/if}
     </div>
   </div>
 </article>
 
 <style>
-  :global(:has(> .plant-card)) {
-    max-width: 40%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  @media (max-width: 1100px) {
-    :global(:has(> .plant-card)) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 800px) {
-    :global(:has(> .plant-card)) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 520px) {
-    :global(:has(> .plant-card)) {
-      grid-template-columns: 1fr;
-    }
-  }
-
   .plant-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    max-width: none;
     box-sizing: border-box;
     padding: 16px;
-    border: 1px solid #eae7ee;
+    border: 1px solid var(--color-border);
     border-radius: 28px;
-    background: #faf9fd;
+    background: var(--color-surface);
     box-shadow:
       0 16px 36px rgb(35 25 61 / 7%),
       0 2px 8px rgb(35 25 61 / 3%);
-    font-family: "Inter", system-ui, sans-serif;
-    color: #20202b;
+    color: var(--color-text);
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease;
@@ -258,14 +248,16 @@
   /* Content */
 
   .content {
-    padding: 22px 6px 6px;
+    padding: 20px 4px 4px;
+    display: flex;
+    flex: 1;
   }
 
   .heading {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
   }
 
   .plant-title {
@@ -281,32 +273,11 @@
     overflow-wrap: anywhere;
   }
 
-  .species {
+  .plant-title p {
     margin: 7px 0 0;
-    color: #928d9d;
+    color: var(--color-text-secondary);
     font-size: 14px;
     line-height: 1.4;
-  }
-
-  /* Status badge */
-
-  .status {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 11px;
-    border-radius: 100px;
-    background: #eadfff;
-    color: #5d2fdc;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .status.swapped {
-    background: #ecebf0;
-    color: #77717f;
   }
 
   /* Tags */
@@ -315,7 +286,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
-    margin-top: 16px;
   }
 
   .location-chip,
@@ -339,8 +309,7 @@
   /* Trait scales */
 
   .metrics {
-    margin-top: 22px;
-    margin-bottom: 22px;
+    width: 100%;
   }
 
   .metric-row {
@@ -363,14 +332,13 @@
     width: 36px;
     height: 36px;
     border-radius: 11px;
-    background: #eee4fa;
-    color: #4e425f;
+    background: var(--color-surface-soft);
+    color: var(--color-primary);
   }
 
   .metric-label {
     font-size: 13px;
     font-weight: 600;
-    white-space: nowrap;
     letter-spacing: -0.2px;
   }
 
@@ -383,13 +351,14 @@
   /* Bottom button */
 
   .view-button {
+    margin-top: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     padding: 15px 20px;
     border-radius: 15px;
-    background: #6426e7;
+    background: var(--color-primary);
     color: white;
     font-size: 15px;
     font-weight: 600;
@@ -400,7 +369,15 @@
   }
 
   .view-button:hover {
-    background: #4f1ac5;
+    background: var(--color-primary-hover);
+  }
+
+  button {
+    border: 0;
+    padding: 4px 0;
+    background: transparent;
+    color: #a12828;
+    cursor: pointer;
   }
 
   .view-button:active {

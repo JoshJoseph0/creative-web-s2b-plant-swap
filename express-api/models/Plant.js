@@ -23,6 +23,14 @@ const plantSchema = new mongoose.Schema({
     default: []
   },
 
+  imageUrl: { type: String, default: null },
+  imageLicense: { type: String, default: null },
+  imageLicenseUrl: { type: String, default: null },
+  ownerId: { type: String, default: 'you' },
+  ownerName: { type: String, default: 'You' },
+  isDemo: { type: Boolean, default: false },
+  demoKey: { type: String, unique: true, sparse: true },
+
   swapped: {
     type: Boolean,
     default: false

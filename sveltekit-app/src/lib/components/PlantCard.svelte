@@ -13,6 +13,8 @@
     name: string;
     species: string;
     imageUrl?: string | null;
+    imageLicense?: string | null;
+    imageLicenseUrl?: string | null;
     image?: { url?: string | null } | null;
     default_image?: { regular_url?: string | null } | null;
     careLevel?: string | number | null;
@@ -20,6 +22,10 @@
     growthSpeed?: string | number | null;
     room?: string | null;
     tags?: string[];
+    ownerId?: string;
+    ownerName?: string;
+    isDemo?: boolean;
+    swapped?: boolean;
   };
 
   let { plant, deletable = false, showLink = true }: { plant: Plant; deletable?: boolean; showLink?: boolean } = $props();
@@ -104,13 +110,14 @@
   let tags = $derived(Array.isArray(plant.tags) ? plant.tags.slice(0, 3) : []);
 
   let plantId = $derived(plant.id ?? plant._id);
+  let failedImage = $state<string | null>(null);
 </script>
 
 <article class="plant-card">
   <!-- PLANT PHOTO -->
   <div class="photo">
-    {#if imageUrl}
-      <img src={imageUrl} alt={plant.species || plant.name} loading="lazy" />
+    {#if imageUrl && failedImage !== imageUrl}
+      <img src={imageUrl} alt={plant.species || plant.name} loading="lazy" onerror={() => failedImage = imageUrl} />
     {:else}
       <div class="photo-placeholder">
         <Leaf size={54} strokeWidth={1.2} />
@@ -125,7 +132,14 @@
       <div class="plant-title">
         <h2>{plant.species}</h2>
         <p>{plant.name}</p>
+        {#if plant.ownerId && plant.ownerId !== 'you'}
+          <p>Shared by {plant.ownerName}{plant.isDemo ? ' · Demo plant' : ''}</p>
+        {/if}
+        {#if plant.swapped}<p>Swapped</p>{/if}
       </div>
+      {#if imageUrl && (plant.imageLicense || plant.imageLicenseUrl)}
+        <p class="photo-credit">Photo via <a href="https://perenual.com" target="_blank" rel="noreferrer">Perenual</a>{#if plant.imageLicenseUrl} · <a href={plant.imageLicenseUrl} target="_blank" rel="noreferrer">{plant.imageLicense || 'Photo licence'}</a>{:else} · {plant.imageLicense}{/if}</p>
+      {/if}
 
       <!-- LOCATION AND TAGS -->
       {#if plant.room || tags.length > 0}
@@ -182,6 +196,8 @@
 </article>
 
 <style>
+  .photo-credit { margin: 0; font-size: 11px; color: var(--color-text-secondary); }
+  .photo-credit a { color: inherit; }
   .plant-card {
     min-width: 0;
     display: flex;

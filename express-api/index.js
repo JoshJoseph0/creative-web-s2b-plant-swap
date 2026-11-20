@@ -3,11 +3,13 @@ import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 import plantRoutes from './routes/plants.js';
+import perenualRoutes from './routes/perenual.js';
 
 const app = express();
 
 app.use(express.json());
 app.use('/plants', plantRoutes);
+app.use('/plant-search', perenualRoutes);
 
 try {
   await mongoose.connect(process.env.MONGODB_URI);

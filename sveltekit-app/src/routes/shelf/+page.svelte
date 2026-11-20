@@ -15,6 +15,9 @@
     {#if form?.error}
       <p role="alert">{form.error}</p>
     {/if}
+    {#if data.swapComplete}
+      <p role="status">Swap complete. Your new plant is on your shelf.</p>
+    {/if}
 
     <div class="plant-grid">
       {#each data.plants as plant (plant.id)}

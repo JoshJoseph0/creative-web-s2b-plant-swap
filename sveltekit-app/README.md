@@ -1,56 +1,27 @@
-# sv
+# Plant Swap Shelf — SvelteKit frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This is the SvelteKit application for the [Plant Swap Shelf coursework project](../README.md). The Express backend is in [`../express-api`](../express-api/).
 
-## Creating a project
+## Start the frontend
 
-If you're seeing this, you've probably already done this step. Congrats!
+From this directory:
 
-```sh
-# create a new project
-npx sv create my-app
+```bash
+npm install
 ```
 
-To recreate this project with the same configuration:
+Copy `.env.example` to a local `.env` file and set:
 
-```sh
-# recreate this project
-npx sv@1.3.0 create --template minimal --types ts --install npm sveltekit-app
+```dotenv
+EXPRESS_API_URL=http://localhost:3000
 ```
 
-## Adding features
+Then start the Express server in another terminal before running:
 
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Vite normally serves the frontend at [http://localhost:5173](http://localhost:5173). The home route redirects to `/shelf`.
 
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Run `npm run check` to check SvelteKit/TypeScript, and `npm run build` for a production build. See the [root README](../README.md) for features, API flow, MongoDB setup and hand-in requirements. Never commit a real `.env`.

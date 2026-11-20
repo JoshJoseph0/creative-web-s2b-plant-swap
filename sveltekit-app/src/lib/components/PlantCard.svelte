@@ -188,13 +188,13 @@
         </a>
       {/if}
       {#if plantId && deletable}
-        <form method="POST" action="/shelf?/setStatus">
-          <input type="hidden" name="id" value={plantId} />
+        <form method="POST" action={`/api/plants/${plantId}`}>
+          <input type="hidden" name="operation" value="setStatus" />
           <input type="hidden" name="swapped" value={plant.swapped ? 'false' : 'true'} />
           <button type="submit" class="status-button">{plant.swapped ? 'Mark available' : 'Mark swapped'}</button>
         </form>
-        <form method="POST" action="/shelf?/delete">
-          <input type="hidden" name="id" value={plantId} />
+        <form method="POST" action={`/api/plants/${plantId}`}>
+          <input type="hidden" name="operation" value="delete" />
           <button type="submit" aria-label={`Delete ${plant.name}`}>Delete plant</button>
         </form>
       {/if}

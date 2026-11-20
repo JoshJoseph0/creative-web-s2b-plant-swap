@@ -4,7 +4,7 @@
 
   import type { PageProps } from "./$types";
 
-  let { data, form }: PageProps = $props();
+  let { data }: PageProps = $props();
 </script>
 
 <main>
@@ -12,9 +12,6 @@
     <div class="shelf-heading">
       <h2>Your plants ({data.plants.length})</h2>
     </div>
-    {#if form?.error}
-      <p role="alert">{form.error}</p>
-    {/if}
     {#if data.swapComplete}
       <p role="status">Swap complete. Your new plant is on your shelf.</p>
     {/if}

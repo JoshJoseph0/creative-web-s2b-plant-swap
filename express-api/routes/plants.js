@@ -19,8 +19,14 @@ const mine = { $or: [{ ownerId: 'you' }, { ownerId: { $exists: false } }] };
 // GET /plants - retrieve saved plants
 router.get('/', async (req, res) => {
   try {
-    const filter = req.query.scope === 'mine' ? mine
+    const filter = req.query.scope === 'mine' ? { ...mine }
       : req.query.scope === 'community' ? { ownerId: { $exists: true, $ne: 'you' } } : {};
+    // Filter in MongoDB rather than filtering the array in the browser.
+    const light = req.query.light;
+    if (light !== undefined && (typeof light !== 'string' || !['low', 'medium', 'bright'].includes(light))) {
+      return res.status(400).json({ error: 'Invalid light filter' });
+    }
+    if (light) filter.lightNeeds = light;
     const plants = await Plant.find(filter).sort({ _id: -1 });
     res.json(plants.map(toPlant));
   } catch (err) {
@@ -91,6 +97,27 @@ router.delete('/:id', async (req, res) => {
     res.sendStatus(204);
   } catch {
     res.status(500).json({ error: 'Could not delete plant' });
+  }
+});
+
+// PATCH /plants/:id/swapped — mark one of your plants swapped or available.
+router.patch('/:id/swapped', async (req, res) => {
+  if (!/^[a-f\\d]{24}$/i.test(req.params.id)) {
+    return res.status(400).json({ error: 'Invalid plant ID' });
+  }
+  if (typeof req.body?.swapped !== 'boolean') {
+    return res.status(400).json({ error: 'swapped must be a boolean' });
+  }
+  try {
+    const plant = await Plant.findOneAndUpdate(
+      { _id: req.params.id, ...mine },
+      { $set: { swapped: req.body.swapped } },
+      { new: true, runValidators: true }
+    );
+    if (!plant) return res.status(404).json({ error: 'Plant not found' });
+    res.json(toPlant(plant));
+  } catch {
+    res.status(500).json({ error: 'Could not update plant status' });
   }
 });
 

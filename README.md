@@ -50,7 +50,7 @@ creative-web-s2b-plant-swap/
     ├── src/lib/server/plantApi.js    # Server-side Express API helper
     ├── src/routes/shelf/            # Main list, form actions, add and detail
     ├── src/routes/plants/           # Community listings
-    ├── src/routes/api/plants/       # SvelteKit create-plant endpoint
+    ├── src/routes/api/plants/       # SvelteKit create, status and delete endpoints
     ├── src/routes/api/plant-search/  # Search proxy
     ├── .env.example
     └── package.json
@@ -153,7 +153,7 @@ This requires the Perenual API key and working provider image URLs. The script u
 | `GET` | `/plant-search/search?q=...` | Optional Perenual plant search |
 | `GET` | `/plant-search/:id` | Optional Perenual plant details |
 
-The SvelteKit server talks to Express using `src/lib/server/plantApi.js`. The add form sends POST data through `src/routes/api/plants/+server.js`; shelf status and deletion use named SvelteKit form actions in `src/routes/shelf/+page.server.js`. Each mutation ultimately reaches Express and MongoDB.
+The SvelteKit server talks to Express using `src/lib/server/plantApi.js`. Adding a plant goes through `src/routes/api/plants/+server.js`. The available/swapped toggle and deletion forms submit to **`src/routes/api/plants/[id]/+server.js`**, which calls the corresponding Express endpoints. The shelf is loaded by `src/routes/shelf/+page.server.js`; all add/status/delete operations travel through SvelteKit `+server.js` routes, then Express, Mongoose and MongoDB.
 
 ## Follow the flow — answers required by the brief
 

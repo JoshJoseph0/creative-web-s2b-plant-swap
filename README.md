@@ -1,183 +1,204 @@
 # Plant Swap Shelf 🌱
 
-A full-stack plant-sharing web application for Bath Spa University's **Creative Web (S2b)** checkpoint. The idea is a simple shared shelf where organisers can list plants and cuttings, see what's available, and manage their collection.
+A full-stack plant-sharing application built for Bath Spa University's **Creative Web — S2b checkpoint** (CCO6102-40). Organisers can save plants, see which are available, mark them swapped or available again, delete listings, and explore demonstration plants from other owners.
 
-**Status:** Work in progress. This README separates features found in the current source code from coursework requirements that still need implementing.
-
-## Tech stack
-
-- **Frontend:** Svelte 5 and SvelteKit, with reusable Svelte components and a responsive sidebar
-- **Backend:** Node.js and Express 5, running as a separate server
-- **Database:** MongoDB (including MongoDB Atlas) using Mongoose
-- **Styling:** CSS and Lucide icons
-
-The request flow is:
+The application is built as **two separate Node.js projects in one repository**:
 
 ```text
 Browser
-   ↓
-SvelteKit frontend (localhost:5173 by default)
-   ↓ server-side fetch / form actions
+  ↓
+SvelteKit frontend (usually localhost:5173)
+  ↓ server-side requests / SvelteKit endpoints and actions
 Express API (localhost:3000)
-   ↓ Mongoose
-MongoDB
+  ↓ Mongoose
+MongoDB Atlas
 ```
 
-## Repository structure
+## Features
+
+- **Your Shelf** (`/shelf`): list your saved plants, including name, species, light requirement, tags and availability.
+- **Add a plant** (`/shelf/add`): create a plant with name, species, light needs and optional tags/photo.
+- **Mark swapped / Mark available**: change the `swapped` Boolean for your own plant. The status is saved in MongoDB and can be changed back.
+- **Filter by light**: All, Low, Medium and Bright links use `/shelf?light=...`. Filtering happens in the **MongoDB query**, not by filtering cards in the browser.
+- **Plant detail page** (`/shelf/[id]`): load a plant by its MongoDB ID; malformed or missing IDs return 404.
+- **Remove a plant**: delete one of your listings from the shelf.
+- **Community plants** (`/plants`): browse seeded demonstration listings and open details.
+- **Optional demo exchange**: offer one of your own available plants in exchange for an available demo plant. The Express service uses a MongoDB transaction to update both records together; this is separate from the basic status toggle.
+- **Perenual search**: optionally look up a plant to pre-fill its common/scientific name, photo, light needs and tags; manual entry works when the external service is unavailable.
+- **Photo credit**: when the provider supplies licensing metadata, links are shown alongside the saved photo.
+
+The application is a **coursework prototype**, not a publicly authenticated marketplace. Owner IDs are simplified demo values rather than real user accounts.
+
+## Repository layout
 
 ```text
 creative-web-s2b-plant-swap/
+├── README.md
+├── .gitignore
 ├── express-api/
-│   ├── index.js                  # Connects to MongoDB and starts Express
-│   ├── models/Plant.js           # Plant schema and Mongoose model
-│   ├── routes/plants.js          # Plant API routes
-│   ├── .env.example
+│   ├── index.js                     # Express on port 3000; Mongoose connection
+│   ├── models/Plant.js              # Mongoose schema, model and collection
+│   ├── routes/plants.js             # CRUD, status toggle, DB filter, demo swap
+│   ├── routes/perenual.js           # External plant-search endpoints
+│   ├── services/swapPlants.js       # MongoDB transaction for demo exchanges
+│   ├── services/perenualService.js  # Provider normalization and requests
+│   ├── scripts/seed-demo-plants.js  # Optional demo seed
+│   ├── .env.example                 # Safe template; NOT real credentials
 │   └── package.json
-├── sveltekit-app/
-│   ├── src/lib/components/       # PlantCard, PlantForm, tag picker, sidebar
-│   ├── src/lib/server/plantApi.js # Server-side Express API requests
-│   ├── src/routes/shelf/         # Shelf, add-plant page, single-plant page
-│   ├── src/routes/plants/        # Plant browsing page
-│   ├── src/routes/api/plants/    # SvelteKit form endpoint
-│   ├── .env.example
-│   └── package.json
-└── README.md
+└── sveltekit-app/
+    ├── src/lib/components/          # PlantCard, PlantForm, sidebar and tags
+    ├── src/lib/server/plantApi.js    # Server-side Express API helper
+    ├── src/routes/shelf/            # Main list, form actions, add and detail
+    ├── src/routes/plants/           # Community listings
+    ├── src/routes/api/plants/       # SvelteKit create-plant endpoint
+    ├── src/routes/api/plant-search/  # Search proxy
+    ├── .env.example
+    └── package.json
 ```
 
-## What is in the current code
+## Local setup
 
-- A plant list loaded from MongoDB through the Express API
-- An add-plant form with **name**, **species**, **light needs**, and selectable **tags**
-- A Mongoose `Plant` model with `name`, `species`, `lightNeeds`, `tags` and `swapped`
-- Light-need values of `low`, `medium` or `bright`
-- Individual plant pages at `/shelf/[id]` and 404 responses for missing or malformed IDs
-- Plant deletion from the shelf, sent through SvelteKit to Express
-- Reusable plant cards, a sidebar and responsive styling
-- A placeholder for plant photos when no image URL exists
+**Prerequisites:** recent Node.js (22+ recommended), npm and a running MongoDB database or a MongoDB Atlas cluster accessible from your machine. The frontend and backend run as **separate Node processes**.
 
-The `swapped` field exists in the database model, but **there is not yet an API/UI action to toggle it**. The current list route does **not** filter by light requirements in MongoDB. Image and extra care metrics are supported by the card component but are not populated by the current Express plant response.
-
-## Run locally
-
-You will need Node.js/npm and access to a MongoDB database. Run the **Express and SvelteKit apps in separate terminals**.
-
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/JoshJoseph0/creative-web-s2b-plant-swap.git
 cd creative-web-s2b-plant-swap
 ```
 
-### 2. Set up the Express API
+### 2. Express backend (terminal one)
 
 ```bash
 cd express-api
 npm install
 ```
 
-Create a local file named `.env` in `express-api/` based on `.env.example`:
+Copy `.env.example` to a **local** `.env` inside `express-api`.
 
 ```dotenv
+# Example for local MongoDB; replace with a private Atlas URI if needed
 MONGODB_URI=mongodb://127.0.0.1:27017/PlantJosh
+# Optional: enables Perenual search and automatic demo seeding
+PERENUAL_API_KEY=your_own_perenual_key
 ```
 
-This is a **local MongoDB example**, not an Atlas connection. If using MongoDB Atlas, replace it with your own Atlas connection string and set the **database path** to your personal course database, for example `PlantJosh`. Keep the username/password private.
+**For the coursework:** use the course cluster with the database **`PlantJosh`** (or another `Plant` + your name, with no punctuation). The database name is the path segment of the **real** `MONGODB_URI` in Express's private `.env`. Do not accidentally connect to a database named `test` or to a different plant demo database. The example above is a *local-only placeholder*, not an Atlas credential.
 
-Start the API:
+Start the backend:
 
 ```bash
 npm run dev
 ```
 
-Express should listen at **http://localhost:3000** after a successful database connection.
+Express starts on **http://localhost:3000** once Mongoose connects. `GET http://localhost:3000/plants` should respond with JSON.
 
-### 3. Set up the SvelteKit frontend
+### 3. SvelteKit frontend (terminal two)
 
-Open a **second terminal** at the repository root:
+From the repository root:
 
 ```bash
 cd sveltekit-app
 npm install
 ```
 
-Create `sveltekit-app/.env`:
+Copy `sveltekit-app/.env.example` to `sveltekit-app/.env`:
 
 ```dotenv
 EXPRESS_API_URL=http://localhost:3000
 ```
 
-Then start SvelteKit:
+Start the frontend:
 
 ```bash
 npm run dev
 ```
 
-Open the local address shown by Vite (usually **http://localhost:5173**). The home page redirects to `/shelf`.
+Open the address printed by Vite (usually **http://localhost:5173**). The home route redirects to `/shelf`. **Both terminals must remain running.** Restart a server after changing its `.env`.
 
-Both servers must be running. If you change either `.env`, restart the affected server.
+Perenual search is optional; plants can be entered manually if no API key is provided.
 
-> **Security:** Never commit real `.env` files, Atlas credentials or `node_modules`. The root `.gitignore` excludes these. Only commit `.env.example` files with safe placeholder values. Any credentials requested by the university must be transferred through an approved private submission method, not GitHub.
+### 4. Tests and build checks
 
-## API endpoints
+```bash
+# From express-api/
+npm test
 
-| Method | Express endpoint | Current behaviour |
-| --- | --- | --- |
-| `GET` | `/plants` | List all saved plants, newest first |
-| `GET` | `/plants/:id` | Get one plant or return 404 |
-| `POST` | `/plants` | Create a plant with validated name, species, light needs and tags |
-| `DELETE` | `/plants/:id` | Delete one plant |
-
-The `POST` form is handled by SvelteKit at `src/routes/api/plants/+server.js`. Deleting from the shelf uses the `delete` form action in `src/routes/shelf/+page.server.js`.
-
-## Follow the flow — coursework questions
-
-### 1. Which database and collection does Express use?
-
-`express-api/index.js` reads `process.env.MONGODB_URI` and passes it to `mongoose.connect(...)`. **The database name is determined by the database path in that URI**, so check your own private Express `.env`; the example above uses `PlantJosh`, but the repository cannot prove which database a deployed/local instance currently uses.
-
-`express-api/models/Plant.js` defines `mongoose.model('Plant', plantSchema)`. By Mongoose's default naming convention, this model uses the **`plants` collection**. MongoDB normally creates the collection when the first document is saved.
-
-### 2. How does the light filter travel through the app?
-
-**Target flow (not yet implemented):**
-
-```text
-/shelf?light=low
-  → sveltekit-app/src/routes/shelf/+page.server.js
-      load() reads url.searchParams.get('light')
-  → sveltekit-app/src/lib/server/plantApi.js
-      sends the light query to Express
-  → express-api/routes/plants.js
-      GET /plants reads req.query.light
-  → Plant.find({ lightNeeds: 'low' })
-  → MongoDB returns matching plants
-  → Express sends JSON → SvelteKit load() → +page.svelte renders cards
+# From sveltekit-app/
+npm run check
+npm run build
 ```
 
-**Current behaviour:** `load()` calls `getPlants(fetch)` without reading the query string, and Express uses `Plant.find()` with no light filter. This requirement is still to do. Filtering must happen in MongoDB, not through `Array.filter()` in the browser.
+The existing backend unit tests cover the demo swap service and Perenual data normalization. **A full end-to-end test still requires your own Atlas configuration, both servers running, and browser interaction.**
 
-### 3. How are plant IDs handled?
+Optional demo seed (in `express-api`):
 
-MongoDB generates an `_id` of type **ObjectId**, normally shown as a 24-character hexadecimal string (e.g. `507f1f77bcf86cd799439011`).
+```bash
+npm run seed:demo
+```
 
-`express-api/routes/plants.js` converts `plant._id.toString()` into the JSON field `id`. The SvelteKit card uses this string for links such as `/shelf/507f1f77bcf86cd799439011`, and `src/routes/shelf/[id]/+page.server.js` loads the single plant using `getPlant(fetch, params.id)`.
+This requires the Perenual API key and working provider image URLs. The script uses stable demo keys to avoid duplicating demo records on repeated runs.
 
-Do **not** turn a MongoDB ID into a number. Both the Express route and the SvelteKit API helper check its hexadecimal format. Invalid/missing plant IDs return a 404 for the detail page.
+## API routes (Express)
 
-## Remaining S2b checkpoint work
+| Method | URL | Purpose |
+| --- | --- | --- |
+| `GET` | `/plants?scope=mine&light=low` | Return your plants that require low light, filtered with Mongoose |
+| `GET` | `/plants?scope=community` | List community/demo plants |
+| `GET` | `/plants/:id` | Get a plant, or return 404 |
+| `POST` | `/plants` | Create and validate a plant |
+| `PATCH` | `/plants/:id/swapped` | Save `{ "swapped": true }` or `false` for one of your plants |
+| `DELETE` | `/plants/:id` | Delete one of your plants |
+| `POST` | `/plants/:id/swap` | Exchange two eligible plants in a database transaction |
+| `GET` | `/plant-search/search?q=...` | Optional Perenual plant search |
+| `GET` | `/plant-search/:id` | Optional Perenual plant details |
 
-- [ ] Implement the **swapped / available** toggle through SvelteKit → Express → MongoDB; verify the state survives a refresh and server restart.
-- [ ] Add **All / Low / Medium / Bright** filter links and pass the selected light value through the entire server-side data flow.
-- [ ] Confirm create, swap, delete and filter changes persist after **both** servers restart.
-- [ ] Save **at least three plants** in the personal MongoDB database for the tutor to test.
-- [ ] Test the detail page for a real ID, an invalid ID (e.g. `zzz`) and a well-formed but nonexistent ID.
-- [ ] Double-check the two `.env.example` files, the actual database name and local setup from a fresh clone.
-- [ ] Submit the GitHub URL and any separately requested private environment files via the university VLE, following the lecturer's secure instructions.
+The SvelteKit server talks to Express using `src/lib/server/plantApi.js`. The add form sends POST data through `src/routes/api/plants/+server.js`; shelf status and deletion use named SvelteKit form actions in `src/routes/shelf/+page.server.js`. Each mutation ultimately reaches Express and MongoDB.
 
-## Coursework
+## Follow the flow — answers required by the brief
 
-**Module:** CCO6102-40 — Creative Web, Bath Spa University.
+### 1. Where is the database and collection decided?
 
-**S2b Plant Swap Shelf checkpoint:** Sunday **22 November 2026 at 11:59**, according to the newer checkpoint brief supplied for this project. The text did not clarify **am versus pm**, so the **Ultra/VLE deadline is the authoritative source**. An older general S2b calendar entry lists 20 November; this project's newer Plant Swap Shelf brief supersedes it.
+In **`express-api/index.js`**, `mongoose.connect(process.env.MONGODB_URI)` reads the backend's private environment variable. The **database name** is the path in the URI (for example `/PlantJosh`). The code does not hardcode the live database name; it depends on that private setting.
 
-This project is being developed as coursework and is not a finished public service.
+In **`express-api/models/Plant.js`**, `mongoose.model('Plant', plantSchema)` defines the **Plant** Mongoose model. By Mongoose's default pluralization, this corresponds to the MongoDB **`plants` collection**. MongoDB creates it when records are inserted.
+
+### 2. Follow the light filter from the URL to MongoDB and back.
+
+1. A visitor clicks **Low** in **`sveltekit-app/src/routes/shelf/+page.svelte`**, navigating to `/shelf?light=low`.
+2. **`sveltekit-app/src/routes/shelf/+page.server.js`** runs `load({ fetch, url })`, reads `url.searchParams.get('light')`, validates the value, and calls `getPlants(fetch, 'mine', 'low')`.
+3. **`sveltekit-app/src/lib/server/plantApi.js`** builds the request to Express: `GET /plants?scope=mine&light=low`.
+4. **`express-api/routes/plants.js`** reads `req.query.light`, validates it and adds `lightNeeds: 'low'` to the owner filter.
+5. **`Plant.find(filter)`** in Mongoose queries the MongoDB `plants` collection. MongoDB returns only matching documents.
+6. Express serializes the documents to JSON with **`toPlant()`**, SvelteKit's `getPlants()` returns them to `load()`, and **`+page.svelte`** renders the filtered plant cards.
+
+There is **no browser-side `Array.filter()` for the light requirement**.
+
+### 3. What does a plant ID look like, and how is it converted?
+
+MongoDB generates `_id` as an **ObjectId**, usually displayed as 24 hexadecimal characters, for example `507f1f77bcf86cd799439011`. In **`express-api/routes/plants.js`**, `toPlant()` maps `plant._id.toString()` into the JSON field `id`.
+
+**`PlantCard.svelte`** uses that string for links to `/shelf/[id]`. **`sveltekit-app/src/routes/shelf/[id]/+page.server.js`** passes `params.id` to **`getPlant()`** in `src/lib/server/plantApi.js`, which fetches the Express `GET /plants/:id` route. Express validates the ID before querying, and nonexistent/invalid detail URLs result in a 404. Do **not** convert IDs using `Number(id)`; MongoDB IDs are strings in JSON and URLs.
+
+## S2b hand-in checklist
+
+- [x] One repository with independent Express and SvelteKit projects
+- [x] Plant schema with `name`, `species`, `swapped` and `lightNeeds`
+- [x] Plant listing, add, delete, detail and status-toggle code
+- [x] Low/medium/bright choice stored in MongoDB and shown on plant cards
+- [x] All/low/medium/bright filter passed to a MongoDB query
+- [x] Detail route with 404 handling
+- [x] Example environment files without credentials in GitHub
+- [x] README technical explanations and run instructions
+- [ ] **Before submission:** confirm your private Express `MONGODB_URI` really selects the personal **`PlantJosh`** database, not `plant_swap_shelf` or `test`.
+- [ ] **Before submission:** ensure the chosen personal database contains **at least three saved plants**, with low/medium/bright examples if possible.
+- [ ] **Before submission:** run `npm test`, `npm run check`, `npm run build` and an actual **two-server restart test**; verify add/status/delete/filter/detail in a browser.
+- [ ] **Before submission:** submit the repo link through the VLE and follow your lecturer's approved secure instructions for any required real `.env` files.
+
+**Security:** real `.env` files, database passwords, API keys and `node_modules` must **not** be committed. The root `.gitignore` excludes `.env` files while allowing `.env.example`. Do not publish real Atlas credentials or put them in the README or Git history.
+
+## Assessment
+
+**Module:** Creative Web (CCO6102-40), Bath Spa University. **Checkpoint:** S2b — Plant Swap Shelf. The newer supplied checkpoint brief states **Sunday 22 November 2026, 11:59**, without specifying AM/PM; check Ultra/VLE for the authoritative cut-off and secure submission method.
+
+This repository contains the code and documentation for the prototype. Running it against the correct database and verifying its live behaviour are part of the final hand-in check.

@@ -12,6 +12,7 @@
     _id?: string;
     name: string;
     species: string;
+    lightNeeds?: 'low' | 'medium' | 'bright';
     imageUrl?: string | null;
     imageLicense?: string | null;
     imageLicenseUrl?: string | null;
@@ -135,6 +136,7 @@
         {#if plant.ownerId && plant.ownerId !== 'you'}
           <p>Shared by {plant.ownerName}{plant.isDemo ? ' · Demo plant' : ''}</p>
         {/if}
+        {#if plant.lightNeeds}<p class="light-needs">Light needs: {plant.lightNeeds}</p>{/if}
         <p class="swap-status">{plant.swapped ? 'Swapped' : 'Available'}</p>
       </div>
       {#if imageUrl && (plant.imageLicense || plant.imageLicenseUrl)}

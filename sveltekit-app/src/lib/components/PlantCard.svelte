@@ -135,7 +135,7 @@
         {#if plant.ownerId && plant.ownerId !== 'you'}
           <p>Shared by {plant.ownerName}{plant.isDemo ? ' · Demo plant' : ''}</p>
         {/if}
-        {#if plant.swapped}<p>Swapped</p>{/if}
+        <p class="swap-status">{plant.swapped ? 'Swapped' : 'Available'}</p>
       </div>
       {#if imageUrl && (plant.imageLicense || plant.imageLicenseUrl)}
         <p class="photo-credit">Photo via <a href="https://perenual.com" target="_blank" rel="noreferrer">Perenual</a>{#if plant.imageLicenseUrl} · <a href={plant.imageLicenseUrl} target="_blank" rel="noreferrer">{plant.imageLicense || 'Photo licence'}</a>{:else} · {plant.imageLicense}{/if}</p>
@@ -186,6 +186,11 @@
         </a>
       {/if}
       {#if plantId && deletable}
+        <form method="POST" action="/shelf?/setStatus">
+          <input type="hidden" name="id" value={plantId} />
+          <input type="hidden" name="swapped" value={plant.swapped ? 'false' : 'true'} />
+          <button type="submit" class="status-button">{plant.swapped ? 'Mark available' : 'Mark swapped'}</button>
+        </form>
         <form method="POST" action="/shelf?/delete">
           <input type="hidden" name="id" value={plantId} />
           <button type="submit" aria-label={`Delete ${plant.name}`}>Delete plant</button>
@@ -363,6 +368,10 @@
     font-size: 13px;
     text-align: right;
   }
+
+  .swap-status { font-size: 13px; font-weight: 600; }
+  .status-button { color: var(--color-primary); font-weight: 600; }
+  .status-button:hover { text-decoration: underline; }
 
   /* Bottom button */
 

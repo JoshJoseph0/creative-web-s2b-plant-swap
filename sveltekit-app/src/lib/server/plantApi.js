@@ -19,13 +19,16 @@ export async function deletePlant(fetcher, id) {
 
 /** @param {typeof fetch} fetcher
  * @param {'all' | 'mine' | 'community'} [scope]
+ * @param {'' | 'low' | 'medium' | 'bright'} [light]
  * @returns {Promise<Plant[]>}
  */
-export async function getPlants(fetcher, scope = 'all') {
+export async function getPlants(fetcher, scope = 'all', light = '') {
   let response;
 
   try {
-    response = await fetcher(`${EXPRESS_API_URL}/plants?scope=${scope}`);
+    const params = new URLSearchParams({ scope });
+    if (light) params.set('light', light);
+    response = await fetcher(`${EXPRESS_API_URL}/plants?${params}`);
   } catch {
     error(502, 'Cannot reach the Express server');
   }
@@ -96,5 +99,28 @@ export async function createPlant(fetcher, plant) {
 
   if (!response.ok) {
     error(502, 'Could not save your plant');
+  }
+}
+
+/** Update an owned plant's available/swapped status in MongoDB.
+ * @param {typeof fetch} fetcher
+ * @param {string} id
+ * @param {boolean} swapped
+ * @returns {Promise<{success?: boolean, error?: string}>}
+ */
+export async function setSwapped(fetcher, id, swapped) {
+  try {
+    const response = await fetcher(`${EXPRESS_API_URL}/plants/${encodeURIComponent(id)}/swapped`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swapped })
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { error: data.error || 'Could not update plant status.' };
+    }
+    return { success: true };
+  } catch {
+    return { error: 'Cannot reach the Express server.' };
   }
 }
